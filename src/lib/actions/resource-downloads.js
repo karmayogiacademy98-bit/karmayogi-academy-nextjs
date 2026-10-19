@@ -28,14 +28,16 @@ export async function submitResourceLead(prevState, formData) {
   }
 
   const supabase = await createClient();
+  const leadId = crypto.randomUUID();
 
-  // Save lead to resource_downloads table (or enquiries if that table doesn't exist)
-  const { data, error } = await supabase.from('enquiries').insert({
+  // Save lead to enquiries table
+  const { error } = await supabase.from('enquiries').insert({
+    id: leadId,
     full_name: result.data.full_name,
     mobile: result.data.mobile,
+    course_name: result.data.resource_title ? `Resource: ${result.data.resource_title}` : 'Resource Download',
     message: `Resource download: ${result.data.resource_title || result.data.resource_id}`,
-    source: 'resource_download',
-  }).select('id').single();
+  });
 
   if (error) {
     console.error('Resource lead insert error:', error);
@@ -45,22 +47,31 @@ export async function submitResourceLead(prevState, formData) {
     };
   }
 
-  // Fetch the resource's file_url
+  // Fetch the resource's file_url and increment download_count
   let fileUrl = null;
   try {
     const { data: resource } = await supabase
       .from('resources')
-      .select('file_url')
+      .select('slug, file_url, download_count')
       .eq('id', result.data.resource_id)
       .single();
-    fileUrl = resource?.file_url || null;
+
+    // Prefer clean shortened branded URL
+    fileUrl = resource?.slug ? `/download/${resource.slug}` : (resource?.file_url || null);
+
+    if (resource) {
+      await supabase
+        .from('resources')
+        .update({ download_count: (resource.download_count || 0) + 1 })
+        .eq('id', result.data.resource_id);
+    }
   } catch {
     // Non-critical – we'll still report success
   }
 
   return {
     success: true,
-    leadId: data?.id || null,
+    leadId,
     fileUrl,
     message: 'Your download is ready!',
   };

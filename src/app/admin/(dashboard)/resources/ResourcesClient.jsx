@@ -57,6 +57,9 @@ export default function ResourcesClient({ categories }) {
               <div>
                 <label className="form-label">URL Slug</label>
                 <input className="form-input" name="slug" value={toSlug(title)} onChange={() => {}} placeholder="auto-generated" style={{ fontFamily: 'monospace' }} readOnly />
+                <p style={{ fontSize: '0.75rem', color: '#15803d', marginTop: '0.35rem' }}>
+                  Branded download link: <strong>/download/{toSlug(title) || 'resource-slug'}</strong>
+                </p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>

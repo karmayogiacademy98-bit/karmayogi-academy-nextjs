@@ -67,7 +67,7 @@ export default function ResourcesClient({ initialResources = [], categories = []
 
       const result = await submitResourceLead(null, fd);
 
-      if (result.success && result.leadId) {
+      if (result.success) {
         setDownloadResult(result);
 
         // Trigger the actual file download

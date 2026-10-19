@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { toggleResourcePublish, deleteResource } from '@/lib/actions/admin-resources';
 import { Eye, EyeOff, Trash2, FileText, ExternalLink } from 'lucide-react';
 import ResourcesClient from './ResourcesClient';
+import CopyLinkButton from './CopyLinkButton';
+import EditResourceModal from './EditResourceModal';
 
 export const metadata = { title: 'Resources' };
 
@@ -40,11 +42,14 @@ export default async function ResourcesAdminPage() {
                       <FileText size={16} color="var(--orange)" />
                       <div>
                         <div style={{ fontWeight: 600, color: 'var(--navy)', fontSize: '0.9375rem' }}>{r.title}</div>
-                        {r.file_url && (
-                          <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: '2px', marginTop: '2px' }}>
-                            View file <ExternalLink size={10} />
-                          </a>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '4px', flexWrap: 'wrap' }}>
+                          {r.slug && <CopyLinkButton slug={r.slug} />}
+                          {r.file_url && (
+                            <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                              Original <ExternalLink size={10} />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -59,11 +64,14 @@ export default async function ResourcesAdminPage() {
                     </form>
                   </td>
                   <td style={{ padding: '0.875rem 1rem' }}>
-                    <form action={async () => { 'use server'; await deleteResource(r.id); }}>
-                      <button type="submit" style={{ display: 'flex', alignItems: 'center', padding: '6px', borderRadius: '6px', background: '#fee2e2', color: '#991b1b', border: 'none', cursor: 'pointer' }}>
-                        <Trash2 size={14} />
-                      </button>
-                    </form>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <EditResourceModal resource={r} categories={categories || []} />
+                      <form action={async () => { 'use server'; await deleteResource(r.id); }}>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', padding: '6px', borderRadius: '6px', background: '#fee2e2', color: '#991b1b', border: 'none', cursor: 'pointer' }} title="Delete resource">
+                          <Trash2 size={14} />
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               ))}
