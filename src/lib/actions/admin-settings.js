@@ -7,7 +7,7 @@ export async function updateSiteSettings(prevState, formData) {
   const supabase = await createClient();
 
   const fields = [
-    'academy_name', 'phone', 'whatsapp', 'email', 'address',
+    'academy_name', 'phone', 'phone2', 'whatsapp', 'email', 'address',
     'google_maps_url', 'google_maps_embed', 'facebook_url', 'instagram_url',
     'youtube_url', 'google_play_url', 'opening_hours', 'footer_description',
     'hero_tagline', 'hero_subtitle', 'logo_url',

@@ -72,6 +72,7 @@ const quickLinks = [
   { label: "Exam Guidance Blog", href: "/blog" },
   { label: "Free Study Resources", href: "/resources" },
   { label: "Contact & Admissions", href: "/contact" },
+  { label: "Sitemap", href: "/sitemap" },
 ];
 
 const courseLinks = [
@@ -413,7 +414,7 @@ export default async function Footer({ logoUrl }) {
                     {settings?.phone || "+91 93255 89491"}
                   </a>
                   <a
-                    href="tel:+918668578908"
+                    href={`tel:${settings?.phone2?.replace(/\s/g, "") || "+919325589491"}`}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -424,7 +425,7 @@ export default async function Footer({ logoUrl }) {
                     }}
                   >
                     <Phone size={14} style={{ color: "var(--gold)" }} />
-                    +91 86685 78908
+                    {settings?.phone2 || "+91 86685 78908"}
                   </a>
                 </div>
                 <a
@@ -502,6 +503,9 @@ export default async function Footer({ logoUrl }) {
             >
               © 2026 Karmayogi Academy Nashik. All Rights Reserved.
             </p>
+            {/* <a href="https://magnobytes.in/">
+              Made by Magnobytes Offwares Pvt. Ltd.
+            </a> */}
             <p
               style={{
                 fontSize: "0.8125rem",

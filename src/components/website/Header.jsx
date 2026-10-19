@@ -39,7 +39,7 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-export default function Header({ logoUrl }) {
+export default function Header({ logoUrl, phone }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [coursesOpen, setCoursesOpen] = useState(false);
@@ -105,7 +105,7 @@ export default function Header({ logoUrl }) {
       }}
     >
       {/* Top Bar */}
-      <div
+      {/* <div
         className="header-top-bar"
         style={{
           background: "var(--navy)",
@@ -115,7 +115,7 @@ export default function Header({ logoUrl }) {
         <div className="container-ka header-top-bar-inner">
           <div className="header-top-bar-left">
             <a
-              href="tel:+919325589491"
+              href={`tel:${(phone || "+91 93255 89491").replace(/\s/g, "")}`}
               className="header-top-link"
               style={{
                 display: "flex",
@@ -130,7 +130,7 @@ export default function Header({ logoUrl }) {
                 size={13}
                 style={{ color: "var(--gold)", flexShrink: 0 }}
               />
-              <span className="header-top-phone-text">+91 93255 89491</span>
+              <span className="header-top-phone-text">{phone || "+91 93255 89491"}</span>
             </a>
             <span
               className="header-top-location"
@@ -169,7 +169,7 @@ export default function Header({ logoUrl }) {
             </Link>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Nav */}
       <nav

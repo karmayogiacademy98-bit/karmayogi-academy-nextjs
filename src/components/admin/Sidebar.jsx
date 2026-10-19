@@ -19,6 +19,7 @@ import {
   ChevronRight,
   BarChart3,
   Info,
+  HardDrive,
 } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
 
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/admin/testimonials", label: "Testimonials", icon: Star },
   { href: "/admin/resources", label: "Resources", icon: FileText },
   { href: "/admin/enquiries", label: "Enquiries", icon: MessageSquare },
+  { href: "/admin/assets", label: "File Manager", icon: HardDrive },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

@@ -12,19 +12,21 @@ import {
   Award,
   PlayCircle,
   ChevronRight,
-  Target
+  Target,
+  Phone
 } from "lucide-react";
 import PageHero from "@/components/website/PageHero";
 import { getCourseBySlug, getCourses } from "@/lib/queries/courses";
+import { getSiteSettings } from "@/lib/queries/settings";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
   if (!course) {
-    return { title: "Course Not Found | Karmayogi Academy" };
+    return { title: "Course Not Found" };
   }
   return {
-    title: `${course.title} | Karmayogi Academy Nashik`,
+    title: course.title,
     description:
       course.short_description ||
       "MPSC batch details and admissions at Karmayogi Academy Nashik.",
@@ -33,15 +35,26 @@ export async function generateMetadata({ params }) {
 
 export default async function CourseDetailPage({ params }) {
   const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const [course, settings] = await Promise.all([
+    getCourseBySlug(slug),
+    getSiteSettings(),
+  ]);
 
   if (!course) {
     notFound();
   }
 
+  const phoneNumber = settings?.phone || '+91 93255 89491';
+  const phoneHref = `tel:${phoneNumber.replace(/\s/g, '')}`;
+
   const otherCourses = (await getCourses({ limit: 4 }))
     .filter((c) => c.slug !== slug)
     .slice(0, 3);
+
+  // Batch dates and mode from course data or defaults
+  const batchMode = course.batch_mode || 'Offline (Classroom) + Online Doubt Sessions';
+  const nextBatchDate = course.next_batch_date || 'January 2027';
+  const batchTimings = course.batch_timings || 'Mon–Sat, 8:00 AM – 11:00 AM';
 
   // Use course.image_url if available, otherwise a placeholder
   const bannerImage = course.image_url || "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop";
@@ -191,15 +204,22 @@ export default async function CourseDetailPage({ params }) {
                 <h2 className="font-playfair text-3xl font-bold text-[var(--navy)]">Course Structure</h2>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                {[
-                  { phase: "Phase 1: Foundation", duration: "Months 1-3", details: "Core subjects: History, Geography, Polity basics, and State Board concepts." },
-                  { phase: "Phase 2: Core Syllabus", duration: "Months 4-7", details: "Advanced topics, Current affairs integration, and Prelims mock tests." },
-                  { phase: "Phase 3: Mains & Answer Writing", duration: "Months 8-10", details: "Descriptive writing, optional subjects guidance, and ethics case studies." },
-                  { phase: "Phase 4: Revision & Interview", duration: "Months 11-12", details: "Full-length mocks, rigorous revision, and mock interviews by serving officers." },
-                ].map((item, idx) => (
+                {(course.course_curriculum && course.course_curriculum.length > 0
+                  ? course.course_curriculum.map((item) => ({
+                      phase: item.phase_name || item.title,
+                      duration: item.duration || '',
+                      details: item.description || item.topics || '',
+                    }))
+                  : [
+                    { phase: "Phase 1: Foundation & Basics", duration: "Weeks 1–12", details: "Core subjects: History of Maharashtra & India, Geography, Indian Polity, and State Board concepts. Building strong fundamentals." },
+                    { phase: "Phase 2: Advanced Syllabus Coverage", duration: "Weeks 13–28", details: "In-depth coverage of Economics, Science & Technology, Environment, Current Affairs integration, and weekly Prelims OMR mock tests." },
+                    { phase: "Phase 3: Mains & Answer Writing", duration: "Weeks 29–40", details: "Descriptive answer writing workshops, optional subject guidance, ethics case studies, and Mains-level subjective test series." },
+                    { phase: "Phase 4: Revision, Mocks & Interview", duration: "Weeks 41–52", details: "Full-length comprehensive mocks, rapid revision modules, PYQ analysis, and mock interviews conducted by serving officers." },
+                  ]
+                ).map((item, idx) => (
                   <div key={idx} className="border-b border-gray-100 last:border-0 p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50 transition-colors">
                     <div className="w-full sm:w-1/3">
-                      <h4 className="font-bold text-[var(--navy)] text-lg">{item.phase}</h4>
+                      <h3 className="font-bold text-[var(--navy)] text-lg">{item.phase}</h3>
                       <span className="text-sm font-semibold text-[var(--orange)]">{item.duration}</span>
                     </div>
                     <div className="w-full sm:w-2/3 text-gray-600">
@@ -207,6 +227,39 @@ export default async function CourseDetailPage({ params }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* Batch Details Section */}
+            <section className="scroll-mt-32">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-1.5 h-6 bg-[var(--orange)] rounded-full"></div>
+                <h2 className="font-playfair text-3xl font-bold text-[var(--navy)]">Batch Details</h2>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="flex items-start gap-3">
+                    <Calendar size={20} className="text-[var(--orange)] flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-bold text-sm text-[var(--navy)] mb-1">Next Batch Starts</p>
+                      <p className="text-sm text-gray-600">{nextBatchDate}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Clock size={20} className="text-[var(--orange)] flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-bold text-sm text-[var(--navy)] mb-1">Batch Timings</p>
+                      <p className="text-sm text-gray-600">{batchTimings}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Target size={20} className="text-[var(--orange)] flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-bold text-sm text-[var(--navy)] mb-1">Mode of Learning</p>
+                      <p className="text-sm text-gray-600">{batchMode}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -239,7 +292,7 @@ export default async function CourseDetailPage({ params }) {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
               <div className="bg-[var(--navy)] p-6 text-center text-white">
                 <h3 className="font-playfair text-2xl font-bold mb-2">Join {course.title}</h3>
-                <p className="text-white/80 text-sm">Next batch starting soon. Limited seats available.</p>
+                <p className="text-white/80 text-sm">Next batch: {nextBatchDate}. Limited seats available.</p>
               </div>
               
               <div className="p-6 space-y-6">
@@ -282,7 +335,10 @@ export default async function CourseDetailPage({ params }) {
                     <ChevronRight size={18} />
                   </Link>
                   <p className="text-center text-xs text-gray-500 mt-3">
-                    Or call us at +91 98765 43210
+                    Or call us at{' '}
+                    <a href={phoneHref} className="text-[var(--orange)] font-semibold hover:underline">
+                      {phoneNumber}
+                    </a>
                   </p>
                 </div>
               </div>
@@ -305,9 +361,9 @@ export default async function CourseDetailPage({ params }) {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
               <div>
                 <span className="text-[var(--orange)] font-bold text-sm tracking-wider uppercase mb-2 block">Explore More</span>
-                <h3 className="font-playfair text-3xl font-bold text-[var(--navy)]">
+                <h2 className="font-playfair text-3xl font-bold text-[var(--navy)]">
                   Other Popular Batches
-                </h3>
+                </h2>
               </div>
               <Link href="/courses" className="text-[var(--blue)] font-semibold hover:underline flex items-center gap-1">
                 View all courses <ChevronRight size={16} />
@@ -330,11 +386,11 @@ export default async function CourseDetailPage({ params }) {
                         <Clock size={12} /> {c.duration || '52 Weeks'}
                       </span>
                     </div>
-                    <h4 className="text-xl font-bold text-[var(--navy)] mb-3 leading-snug group-hover:text-[var(--blue)] transition-colors">
+                    <h3 className="text-xl font-bold text-[var(--navy)] mb-3 leading-snug group-hover:text-[var(--blue)] transition-colors">
                       <Link href={`/courses/${c.slug}`} className="before:absolute before:inset-0">
                         {c.title}
                       </Link>
-                    </h4>
+                    </h3>
                     <p className="text-sm text-gray-600 line-clamp-3 mb-6 flex-1">
                       {c.short_description}
                     </p>

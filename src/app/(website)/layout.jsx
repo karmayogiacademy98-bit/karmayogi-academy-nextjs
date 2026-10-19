@@ -10,7 +10,7 @@ export default async function WebsiteLayout({ children }) {
   return (
     <ReCaptchaProvider>
       <AnalyticsProvider />
-      <Header logoUrl={settings?.logo_url || null} />
+      <Header logoUrl={settings?.logo_url || null} phone={settings?.phone} />
       <main>{children}</main>
       <Footer logoUrl={settings?.logo_url || null} />
       <WhatsAppButton phoneNumber={settings?.whatsapp} />

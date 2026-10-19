@@ -49,7 +49,10 @@ export const metadata = {
   },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || 'https://karmayogiacademy.com'
-  )
+  ),
+  alternates: {
+    canonical: '/',
+  }
 };
 
 export default function RootLayout({

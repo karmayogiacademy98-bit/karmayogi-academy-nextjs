@@ -1,7 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Download, X, CheckCircle, Loader2 } from 'lucide-react';
+import { FileText, Download, X, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { submitResourceLead } from '@/lib/actions/resource-downloads';
+
+const PHONE_REGEX = /^[6-9]\d{9}$/;
+
+function validatePhone(value) {
+  const digits = value.replace(/[\s\-()]/g, '');
+  if (!digits) return 'Mobile number is required';
+  if (!/^\d+$/.test(digits)) return 'Only digits are allowed';
+  if (digits.length !== 10) return 'Must be exactly 10 digits';
+  if (!PHONE_REGEX.test(digits)) return 'Must start with 6, 7, 8, or 9';
+  return null;
+}
 
 export default function ResourcesClient({ initialResources = [], categories = [] }) {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -9,7 +21,8 @@ export default function ResourcesClient({ initialResources = [], categories = []
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', mobile: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadResult, setDownloadResult] = useState(null);
+  const [phoneError, setPhoneError] = useState(null);
 
   const filteredResources = activeCategory === 'all'
     ? initialResources
@@ -17,19 +30,66 @@ export default function ResourcesClient({ initialResources = [], categories = []
 
   const handleOpenDownload = (resource) => {
     setSelectedResource(resource);
-    setDownloadSuccess(false);
+    setDownloadResult(null);
+    setPhoneError(null);
+    setFormData({ name: '', mobile: '' });
     setModalOpen(true);
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+    setFormData({ ...formData, mobile: value });
+    if (phoneError) {
+      const err = validatePhone(value);
+      setPhoneError(err);
+    }
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.mobile) return;
+    if (!formData.name.trim()) return;
 
+    // Client-side phone validation
+    const pErr = validatePhone(formData.mobile);
+    if (pErr) {
+      setPhoneError(pErr);
+      return;
+    }
+    setPhoneError(null);
     setSubmitting(true);
-    // Simulate brief network submission or lead capture
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitting(false);
-    setDownloadSuccess(true);
+
+    try {
+      const fd = new FormData();
+      fd.append('full_name', formData.name.trim());
+      fd.append('mobile', formData.mobile.trim());
+      fd.append('resource_id', selectedResource?.id || '');
+      fd.append('resource_title', selectedResource?.title || '');
+
+      const result = await submitResourceLead(null, fd);
+
+      if (result.success && result.leadId) {
+        setDownloadResult(result);
+
+        // Trigger the actual file download
+        if (result.fileUrl) {
+          const link = document.createElement('a');
+          link.href = result.fileUrl;
+          link.download = selectedResource?.title || 'resource';
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      } else {
+        alert(result.message || 'Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('Resource download error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -115,7 +175,7 @@ export default function ResourcesClient({ initialResources = [], categories = []
                     letterSpacing: '0.04em'
                   }}
                 >
-                  PDF
+                  {res.file_type || 'PDF'}
                 </span>
               </div>
 
@@ -206,7 +266,7 @@ export default function ResourcesClient({ initialResources = [], categories = []
               <X size={20} />
             </button>
 
-            {!downloadSuccess ? (
+            {!downloadResult ? (
               <>
                 <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                   <div
@@ -257,20 +317,46 @@ export default function ResourcesClient({ initialResources = [], categories = []
                     <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>
                       WhatsApp / Mobile Number *
                     </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="e.g. 9876543210"
-                      value={formData.mobile}
-                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.625rem 0.875rem',
-                        borderRadius: '0.5rem',
-                        border: '1px solid #D1D5DB',
-                        fontSize: '0.875rem'
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <span style={{
+                        position: 'absolute',
+                        left: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        fontSize: '0.875rem',
+                        color: '#6B7280',
+                        fontWeight: 500,
+                      }}>
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        required
+                        inputMode="numeric"
+                        maxLength={10}
+                        placeholder="9876543210"
+                        value={formData.mobile}
+                        onChange={handlePhoneChange}
+                        onBlur={() => {
+                          if (formData.mobile) {
+                            const err = validatePhone(formData.mobile);
+                            setPhoneError(err);
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.625rem 0.875rem 0.625rem 2.75rem',
+                          borderRadius: '0.5rem',
+                          border: phoneError ? '1px solid #EF4444' : '1px solid #D1D5DB',
+                          fontSize: '0.875rem'
+                        }}
+                      />
+                    </div>
+                    {phoneError && (
+                      <p style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <AlertCircle size={12} /> {phoneError}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -295,7 +381,7 @@ export default function ResourcesClient({ initialResources = [], categories = []
                     {submitting ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        Preparing PDF...
+                        Preparing Download...
                       </>
                     ) : (
                       'Download PDF Now'
@@ -307,11 +393,19 @@ export default function ResourcesClient({ initialResources = [], categories = []
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 <CheckCircle size={48} style={{ color: '#10B981', margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy)', marginBottom: '0.5rem' }}>
-                  Download Started!
+                  {downloadResult.fileUrl ? 'Download Started!' : 'Enquiry Saved!'}
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '1.5rem', lineHeight: 1.5 }}>
-                  Thank you, <strong>{formData.name}</strong>. Your study guide has been queued for download. We have also sent a copy to <strong>{formData.mobile}</strong>.
+                <p style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+                  {downloadResult.fileUrl
+                    ? <>Thank you, <strong>{formData.name}</strong>. Your file download has started. If it didn&apos;t begin automatically, <a href={downloadResult.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--orange)', fontWeight: 600 }}>click here to download</a>.</>
+                    : <>Thank you, <strong>{formData.name}</strong>. This resource doesn&apos;t have a downloadable file yet. Our team will share it with you at <strong>{formData.mobile}</strong>.</>
+                  }
                 </p>
+                {downloadResult.leadId && (
+                  <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginBottom: '1.5rem' }}>
+                    Reference: {downloadResult.leadId.slice(0, 8).toUpperCase()}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}

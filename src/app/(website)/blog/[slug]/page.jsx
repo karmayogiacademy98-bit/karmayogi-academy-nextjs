@@ -8,10 +8,10 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const blog = await getBlogBySlug(slug);
   if (!blog) {
-    return { title: "Blog Post Not Found | Karmayogi Academy" };
+    return { title: "Blog Post Not Found" };
   }
   return {
-    title: `${blog.title} | Karmayogi Academy Nashik`,
+    title: blog.title,
     description:
       blog.excerpt ||
       "Read the latest MPSC guidance from Karmayogi Academy mentors.",

@@ -44,7 +44,7 @@ formData)
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from('enquiries').insert({
+  const { data, error } = await supabase.from('enquiries').insert({
     full_name: result.data.full_name,
     mobile: result.data.mobile,
     email: result.data.email || null,
@@ -52,7 +52,7 @@ formData)
     course_name: result.data.course_name || null,
     preferred_batch: result.data.preferred_batch || null,
     message: result.data.message || null
-  });
+  }).select('id').single();
 
   if (error) {
     console.error('Enquiry insert error:', error);
@@ -65,6 +65,7 @@ formData)
   revalidatePath('/admin/enquiries');
   return {
     success: true,
+    leadId: data?.id || null,
     message: 'Thank you! Our team will contact you shortly.'
   };
 }
