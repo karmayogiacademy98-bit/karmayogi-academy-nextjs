@@ -6,6 +6,7 @@ import {
   GoogleTagManagerBody,
   GoogleTagManagerHead,
 } from '@/components/analytics/GoogleTagManager';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 const inter = Inter({
@@ -84,7 +85,7 @@ export default function RootLayout({
               iconTheme: { primary: '#ef4444', secondary: '#fff' }
             }
           }} />
-        
+        <Analytics />
       </body>
     </html>);
 
